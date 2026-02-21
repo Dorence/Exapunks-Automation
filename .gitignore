@@ -115,3 +115,6 @@ dmypy.json
 
 # Project specific outputs
 .png
+
+# IDE
+.vscode/

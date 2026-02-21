@@ -16,8 +16,7 @@ This code wasn't really made with other people using it mind. That said, if your
 
 This project uses Pillow and pyautogui
 ```
-python -m pip install Pillow
-python -m pip install pyautogui
+python -m pip install Pillow pyautogui git+https://github.com/RedFantom/ttkthemes
 ```
 
 Under `main.py`'s `main` function, there is a function call for `board.play_games(n)` or `board.play_quick_games(n)`. A quick game doesn't look at moves that involve moving cards to the hand and it generally solves the board on the order of ~2 seconds. There is no guarentee that the game will be possible without the hand (maybe ~50% to 60% are completable without it?), but it's very fast and it'll redeal the board until it completes `n` games. A normal game looks at the hand as a last resort and it's success rate is 100%, but it takes maybe ~20 seconds to solve and it'll keep playing until it reaches `n` games completed.
