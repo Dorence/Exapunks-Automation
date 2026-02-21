@@ -1,5 +1,5 @@
 from collections import deque
-import copy as copy
+import copy
 
 import time
 import sys
