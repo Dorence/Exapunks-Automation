@@ -5,7 +5,7 @@ This repository solves Exapunk's Solitaire minigame, ПАСЬЯНС. This reposi
 - Forked from https://github.com/Will-Crain/Exapunks-Automation
 - Support dynamic resolution, whether fullscreen or not
 - A simple GUI with dynamic boundary settings
-- Template under `res` folder is not used anymore, a pattern-based matching method is adopted
+- Template under `res` folder is not used anymore, a pattern-based recognition method is adopted
 
 # Example of solution
 <img src='ex/solitaire_0.gif' width=400px>
@@ -25,3 +25,5 @@ python Gui.py
 # Run Will-Crain's Script
 python main.py
 ```
+
+The card recognition algorithm is based on resolution 1920x1080. For low resolutions like 1366x768, you may need to enlarge `OCR size` (14 to 16).

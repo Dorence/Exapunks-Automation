@@ -82,10 +82,7 @@ class Board:
         return Game(ranks)
 
     def execute_move_list(self, move_list):
-
-        # Tab into window
-        self.tab_in()
-
+        self.tab_in()  # Tab into window
         for move in move_list:
             from_position = self.get_back_stack_position(move.from_rank_id)
             dest_position = self.get_front_stack_position(move.dest_rank_id)
@@ -147,21 +144,26 @@ class Board:
         pyautogui.mouseUp()
         time.sleep(self.default_delay)
 
-    def press_new_game(self, delay: float = 5):
-        self.tab_in()
-        pyautogui.moveTo(self.newgame_x, self.newgame_y, duration=self.default_delay)
-        pyautogui.mouseDown(button="left")
-        pyautogui.mouseUp(button="left")
-        time.sleep(delay)
-
     def make_game(self):
         return self.make_game_by_boxes(self.bounding_box_list)
+
+    def next_game(
+        self, n: int, comp: int, on_complete: Callable[[int], bool] | None
+    ) -> bool:
+        r = on_complete(comp) if on_complete is not None else False
+        if not r and comp < n:
+            self.tab_in()
+            pyautogui.moveTo(self.newgame_x, self.newgame_y, self.default_delay)
+            pyautogui.mouseDown(button="left")
+            pyautogui.mouseUp(button="left")
+            time.sleep(5)
+        return r
 
     def play_games(
         self,
         n: int,
         game_maker: Callable[[], Game] | None,
-        on_complete: Callable[[int], None] | None,
+        on_complete: Callable[[int], bool] | None,
     ):
         durations = []
         completed_games = 0
@@ -176,26 +178,25 @@ class Board:
             end_time = time.time()
 
             if winning_moves is None:
-                self.press_new_game()
+                if self.next_game(n, completed_games, on_complete):
+                    break
                 continue
 
             durations.append(end_time - start_time)
             self.execute_move_list(winning_moves)
             completed_games += 1
-            if on_complete is not None:
-                on_complete(completed_games)
-            if completed_games < n:
-                self.press_new_game()
+            if self.next_game(n, completed_games, on_complete):
+                break
 
-        dur_mean = mean(durations)
-        dur_std = stdev(durations) if completed_games > 1 else 0.0
+        dur_mean = mean(durations) if len(durations) > 0 else 0.0
+        dur_std = stdev(durations) if len(durations) > 1 else 0.0
         print(f"{dur_mean:0.3f}s +/- {dur_std}s")
 
     def play_quick_games(
         self,
         n: int,
         game_maker: Callable[[], Game] | None,
-        on_complete: Callable[[int], None] | None,
+        on_complete: Callable[[int], bool] | None,
     ):
         durations = []
         completed_games = 0
@@ -210,17 +211,16 @@ class Board:
             end_time = time.time()
 
             if winning_moves is None:
-                self.press_new_game()
+                if self.next_game(n, completed_games, on_complete):
+                    break
                 continue
 
             durations.append(end_time - start_time)
             self.execute_move_list(winning_moves)
             completed_games += 1
-            if on_complete is not None:
-                on_complete(completed_games)
-            if completed_games < n:
-                self.press_new_game()
+            if self.next_game(n, completed_games, on_complete):
+                break
 
-        dur_mean = mean(durations)
-        dur_std = stdev(durations) if completed_games > 1 else 0.0
+        dur_mean = mean(durations) if len(durations) > 0 else 0.0
+        dur_std = stdev(durations) if len(durations) > 1 else 0.0
         print(f"{dur_mean:0.3f}s +/- {dur_std}s")

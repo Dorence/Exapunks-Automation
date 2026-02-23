@@ -63,8 +63,8 @@ class CardBitmap:
         0xD0240B,  # 310002100023 320002200023
         0xD07D07,  # 310013310013 310023320013
         0xD07D07,  # 310013310013 320013310023
-        0xF4001F,  # 330000000133 331000000133
-        0xF4001F,  # 331000000133 331000000133
+        0xF5002F,  # 330000000133 331000000133
+        0xF5002F,  # 331000000133 331000000133
         0xD02807,  # 310002200013 310012210013
         0xC07D03,  # 300013310003 300023320003
         0xC07D03,  # 300013310003 300013310003
@@ -129,7 +129,7 @@ class CardBitmap:
         0x000000,  # 000000000000
         0x000000,  # 000000000000
         0x800000,  # 200000000000
-        0xE00001,  # 320000000001
+        0xE00003,  # 320000000001
     ]
 
     HEART = [
@@ -157,8 +157,8 @@ class CardBitmap:
         0x400000,  # 100000000000
         0x000000,  # 000000000000
         0x000000,  # 000000000000
-        0x800890,  # 200000202100
-        0xE03CB4,  # 320003302310
+        0x801890,  # 200000202100
+        0xE03CA4,  # 320003302310
         0xF8B87D,  # 332023201331
     ]
 
@@ -169,14 +169,17 @@ class CardBitmap:
     def to_bitmap(image: list[int], width: int, height: int):
         b = [0] * height
         ss = []
+        amin = min(image)
+        amax = max(image) + 1
         for row in range(height):
             s = ""
             for col in range(width):
-                a = int(image[row * height + col] / 64)
+                a = (image[row * height + col] - amin) / (amax - amin)  # normalize
+                a = int(a * 4)
                 b[row] = (b[row] << 2) | (a & 3)
                 s += str(a)
             ss.append(s)
-        # print("to_bitmap()", ss)
+        print("to_bitmap()", ss)
         return b
 
     @staticmethod
@@ -206,6 +209,8 @@ class CardBitmap:
         M = len(target)  # M*M, M <= N
         if N < M:
             raise Exception("bitmap should have larger dims than target")
+        # 6/8/9, C/S are too close, use weighted diff
+        WEIGHT = [1, 1, 1, 1.2, 2, 1.5, 1, 1.1, 2, 2, 1.5, 1.5]
         mask = (1 << (2 * M)) - 1
         min_diff = 4 * M * M
         for dx in range(0, N + 1 - M):
@@ -218,9 +223,11 @@ class CardBitmap:
                     b = target[row]
                     d = a ^ b
                     # ss.append(f"{a:06x}^{b:06x}={d:06x}")
+                    s = 0
                     while d > 0:
-                        diff += d & 3
+                        s += d & 3
                         d >>= 2
+                    diff += s * WEIGHT[row]
                 # print(dx, dy, diff, ss)
                 if diff < M:  # almost exact match
                     return diff

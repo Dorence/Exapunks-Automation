@@ -175,6 +175,9 @@ class Gui:
         ttk.Button(capture_frame, text="Quick", command=self.solve_games_quick).grid(
             row=1, column=3, padx=5, pady=5
         )
+        ttk.Button(capture_frame, text="Stop", command=self.press_solve_stop).grid(
+            row=1, column=4, padx=5, pady=5
+        )
 
         self.solve_prog = ttk.Progressbar(capture_frame, length=200, value=0, maximum=1)
         self.solve_prog.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
@@ -329,6 +332,7 @@ class Gui:
         self.canvas = tk.Canvas(preview_frame, bg="gray", width=800, height=450)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        self.solve_stop = False  # stop botton pressed
         self.solve_th: Thread | None = None  # game solve thread
 
     def capture_window(self):
@@ -475,7 +479,7 @@ class Gui:
             )
             self.ocr_tk_images.append(img_tk)
             self.ocr_canvas.create_image(x, 10, image=img_tk)
-            self.ocr_canvas.create_text(x, 30, text=f"{diffs[i]}")
+            self.ocr_canvas.create_text(x, 30, text=f"{diffs[i]:.1f}")
 
     def card_marginx(self):
         cw = int(self.card_width.get())
@@ -590,20 +594,30 @@ class Gui:
             + f"newgame=({self.board.newgame_x},{self.board.newgame_y}) "
         )
 
+    def press_solve_stop(self):
+        self.solve_stop = True
+
+    def on_solve_complete(self, n):
+        self.solve_prog.config(value=n)
+        if self.solve_stop:
+            self.solve_stop = False
+            return True  # stop iteration
+        return False
+
     @staticmethod
     def solve_game_thread(inst):
         n = int(inst.board_n.get())
         inst.solve_prog.config(value=0, maximum=n)
         inst.board.play_games(
             n,
-            lambda: inst.make_game(),
-            lambda k: inst.solve_prog.config(value=k),
+            inst.make_game,
+            inst.on_solve_complete,
         )
 
     def solve_games(self):
         try:
             if self.solve_th is not None:
-                self.solve_th.join()
+                self.solve_th.join(30)
             self.update_board()
             self.solve_th = Thread(target=self.solve_game_thread, args=(self,))
             self.solve_th.start()
@@ -624,7 +638,7 @@ class Gui:
     def solve_games_quick(self):
         try:
             if self.solve_th is not None:
-                self.solve_th.join()
+                self.solve_th.join(30)
             self.update_board()
             self.solve_th = Thread(target=self.solve_quick_thread, args=(self,))
             self.solve_th.start()
